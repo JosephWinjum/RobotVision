@@ -8,6 +8,9 @@ os.environ['TCL_LIBRARY'] = r'C:\Users\Josep\AppData\Local\Programs\Python\Pytho
 os.environ['TK_LIBRARY'] = r'C:\Users\Josep\AppData\Local\Programs\Python\Python313\tcl\tk8.6'
 import tkinter as tk
 import time
+import pyrealsense2 as rs
+from picamera2 import Preview
+from maestro import Controller
 
 
 recognizer = cv2.face.LBPHFaceRecognizer_create()
@@ -42,17 +45,21 @@ display_label = tk.Label(root, textvariable=display_text, font=("Times New Roman
 display_label.pack()
 
 # realsense stuff
-# pipeline = rs.pipeline()
-# config = rs.config()
-# config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
-# pipeline.start(config)
+pipeline = rs.pipeline()
+config = rs.config()
+config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
+pipeline.start(config)
 
 #my webcam
-cap = cv2.VideoCapture(0)
+#cap = cv2.VideoCapture(0)
+class Tango:
+    def __init__(self):
+        self.Tango = Controller()
 
+t = Tango()
 
 while True:
-    ret, frame = cap.read()
+    ret, frame = pipeline.read()
     if not ret:
         print("Failed frame grab")
         break
@@ -91,6 +98,7 @@ while True:
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
-cap.release()
 cv2.destroyAllWindows()
 root.destroy()
+
+

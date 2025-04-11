@@ -1,6 +1,16 @@
 import cv2 as cv
 import numpy as np
 import time
+from maestro import Controller
+import serial
+from sys import version_info
+
+
+
+class Tango:
+    def __init__(self):
+        self.controller = Controller()
+
 
 class Marker:
     markerDict = {}
@@ -17,6 +27,7 @@ class Marker:
         updateDist = self.globalPosition[2] - triple[2]
         self.relativeDistance = (updateLR, updateUD, updateDist)
         return self.relativeDistance
+
 
     @classmethod
     def updateMarker(cls, marker_id):
@@ -47,7 +58,7 @@ class Marker:
     #move forward for (distance param) time
 
 
-
+tango = None
 
 
 def pnp_feet_conversion(tvec):
@@ -57,8 +68,49 @@ def pnp_feet_conversion(tvec):
         depth = (0.00051 - tvec[2]) / 0.0002
     return (leftRight, upDown, depth)
 
+#i think distance is the 3rd part of vect here, so if distance is 2 (2 feet away), we should move forward for 1 second or something
+def move_forwards_to_marker(distance):
+    while distance >= 2:
+        Tango.setTarget(0, 5200)
+        #need to update distance here/recalculate vectors
+    Tango.setTarget(0, 6000)
+
+#likely dont need move backward but here anyway
+def move_backwards(distance):
+    while distance >= 2:
+        Tango.setTarget(0, 6800)
+        #need to update distance here/recalculate vectors
+    Tango.setTarget(0, 6000)
+
+def move_forwards(durationordistance):
+    start_time = time.time()
+    while (time.time() - start_time < durationordistance):
+        Tango.setTarget(0, 6800)
+        time.sleep(0.01)
+    Tango.setTarget(0,6000)
+
+def turn(boolRight):
+    if (boolRight):
+        #this line is placeholder so it stops telling me i have indent errors since no body lol
+        a = 5
+        #turn right and go forward a bit
+        #Tango.setTarget(?, ?)
+        #move_forwards(a bit)
+    else:
+        a = 5
+        #Tango.setTarget(?, ?)
+        #move_forwards(a bit)
+
+
 
 def main():
+    global tango
+    tango = Tango()
+    tango.controller.setTarget(0,5200)
+    tango.controller.setTarget(1,5200)
+    tango.controller.setTarget(0,6000)
+    tango.controller.setTarget(1,6000)
+    time.sleep(1)
     #default stuff - no camera calibration needed??
     arucoDict = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_4X4_50)
     arucoParams = cv.aruco.DetectorParameters()
@@ -140,6 +192,9 @@ def main():
                     #frame = cv.line(frame, tuple(image_points[0].ravel()), tuple(imgpts[1]), (0, 255, 0), 5)
                     #frame = cv.line(frame, tuple(image_points[0].ravel()), tuple(imgpts[2]), (0, 0, 255), 5)
 
+                    #initialize wheels
+
+
 
                     # Optional: Output rvec and tvec for debugging
                     if(count % 30 == 0):
@@ -159,12 +214,6 @@ def main():
 
     capture.release()
     cv.destroyAllWindows()
-
-
-
-
-
-
 
 if __name__ == '__main__':
     main()
